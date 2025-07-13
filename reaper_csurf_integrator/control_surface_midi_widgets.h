@@ -2478,6 +2478,102 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class NovationDisplay_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    int target_;
+    int field_;
+    string lastStringSent_;
+
+public:
+    virtual ~NovationDisplay_Midi_FeedbackProcessor() {}
+    NovationDisplay_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, int target, int field) : Midi_FeedbackProcessor(csi,surface, widget), target_(target), field_(field)
+    {
+    }
+    
+    virtual const char *GetName() override { return "NovationDisplay_Midi_FeedbackProcessor"; }
+
+    virtual void ForceClear() override
+    {
+        const PropertyList properties;
+        ForceValue(properties, "");
+    }
+
+    virtual void SetValue(const PropertyList &properties, const char * const &inputText) override
+    {
+        if (strcmp(inputText, lastStringSent_.c_str())) // changes since last send
+            ForceValue(properties, inputText);
+    }
+    
+    virtual void ForceValue(const PropertyList &properties, const char * const &inputText) override
+    {
+        lastStringSent_ = inputText;
+        
+        char tmp[MEDBUF];
+        const char *text = GetWidget()->GetSurface()->GetRestrictedLengthText(inputText, tmp, sizeof(tmp));
+
+        if (!strcmp(text,"-150.00")) text="-inf";
+
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[256];
+        } midiSysExData;
+        midiSysExData.evt.frame_offset=0;
+        midiSysExData.evt.size=0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x20;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x29;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x14;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x06;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = target_;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = field_;
+        
+        int length = (int)strlen(text);
+        
+        if (length > 30)
+            length = 30;
+        
+        int count = 0;
+        
+        while (count < length)
+        {
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = *text++;                // tx text in ASCII format
+            count++;
+        }
+        
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
+        SendMidiSysExMessage(&midiSysExData.evt);
+    }
+
+    virtual void Configure(const vector<unique_ptr<ActionContext>> &contexts) override
+    {
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[256];
+        } midiSysExData;
+        midiSysExData.evt.frame_offset=0;
+        midiSysExData.evt.size=0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x20;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x29;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x14;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x04;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = target_;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x61;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xf7;
+        
+        SendMidiSysExMessage(&midiSysExData.evt);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class FB_MCU_AssignmentDisplay_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
