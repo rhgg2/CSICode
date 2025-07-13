@@ -3345,7 +3345,9 @@ void TrackNavigationManager::RebuildTracks()
     int oldTracksSize = (int) tracks_.size();
     bool hasChanged = false;
   
-    if (oldTracksSize == GetNumTracks())
+    if (oldTracksSize != GetNumTracks())
+        hasChanged = true;
+    else
     {
         for (int i = 1; i <= GetNumTracks(); ++i)
             if (MediaTrack* track = CSurf_TrackFromID(i, followMCP_))
