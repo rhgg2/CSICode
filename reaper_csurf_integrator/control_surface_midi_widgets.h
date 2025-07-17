@@ -973,6 +973,64 @@ public:
     }
 };
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class NovationLaunchkeyMk4RGB7Bit_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual ~NovationLaunchkeyMk4RGB7Bit_Midi_FeedbackProcessor() {}
+    NovationLaunchkeyMk4RGB7Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    
+    virtual const char *GetName() override { return "NovationLaunchkeyMk4RGB7Bit_Midi_FeedbackProcessor"; }
+
+    virtual void ForceClear() override
+    {
+        rgba_color color;
+        ForceColorValue(color);
+    }
+
+    virtual void SetColorValue(const rgba_color &color) override
+    {
+        if (color != lastColor_)
+            ForceColorValue(color);
+    }
+
+    virtual void ForceColorValue(const rgba_color &color) override
+    {
+        lastColor_ = color;
+        
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[64];
+        } midiSysExData;
+        
+        midiSysExData.evt.frame_offset = 0;
+        midiSysExData.evt.size = 0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x20;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x29;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x14;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
+        
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x43;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1] ;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.r / 2; // only 127 bit max for this device
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.g / 2;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.b / 2;
+        
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
+        
+        SendMidiSysExMessage(&midiSysExData.evt);
+        if (g_debugLevel >= DEBUG_LEVEL_DEBUG) {
+            LogToConsole(256, "[DEBUG] [%s] ForceColorValue %d %d %d\n", widget_->GetName(), color.r, color.g, color.b);
+        }
+    }
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class FaderportRGB_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2478,7 +2536,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class NovationDisplay_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+class NovationLaunchkeyMk4Display_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 private:
@@ -2487,12 +2545,12 @@ private:
     string lastStringSent_;
 
 public:
-    virtual ~NovationDisplay_Midi_FeedbackProcessor() {}
-    NovationDisplay_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, int target, int field) : Midi_FeedbackProcessor(csi,surface, widget), target_(target), field_(field)
+    virtual ~NovationLaunchkeyMk4Display_Midi_FeedbackProcessor() {}
+    NovationLaunchkeyMk4Display_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, int target, int field) : Midi_FeedbackProcessor(csi,surface, widget), target_(target), field_(field)
     {
     }
     
-    virtual const char *GetName() override { return "NovationDisplay_Midi_FeedbackProcessor"; }
+    virtual const char *GetName() override { return "NovationLaunchkeyMk4Display_Midi_FeedbackProcessor"; }
 
     virtual void ForceClear() override
     {
@@ -2509,7 +2567,7 @@ public:
     virtual void ForceValue(const PropertyList &properties, const char * const &inputText) override
     {
         lastStringSent_ = inputText;
-        
+                 
         char tmp[MEDBUF];
         const char *text = GetWidget()->GetSurface()->GetRestrictedLengthText(inputText, tmp, sizeof(tmp));
 

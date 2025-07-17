@@ -561,6 +561,10 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
         {
             widget->GetFeedbackProcessors().push_back(make_unique<NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
+        else if (widgetType == "FB_NovationLaunchkeyMk4RGB7Bit" && size == 4)
+        {
+            widget->GetFeedbackProcessors().push_back(make_unique<NovationLaunchkeyMk4RGB7Bit_Midi_FeedbackProcessor>(csi_, this, widget, message1));
+        }
         else if (widgetType == "FB_MFT_RGB" && size == 4)
         {
             widget->GetFeedbackProcessors().push_back(make_unique<MFT_RGB_Midi_FeedbackProcessor>(csi_, this, widget, message1));
@@ -719,12 +723,12 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
             else if (widgetType == "FB_C4DisplayLower")
                 widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x17, atoi(tokenLines[i][1].c_str()) + 0x30, atoi(tokenLines[i][2].c_str())));
         }
-        else if ((widgetType == "FB_NovationDisplayUpper" || widgetType == "FB_NovationDisplayLower") && size == 2)
+        else if ((widgetType == "FB_NovationLaunchkeyMk4DisplayUpper" || widgetType == "FB_NovationLaunchkeyMk4DisplayLower") && size == 2)
         {
-            if (widgetType == "FB_NovationDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(make_unique<NovationDisplay_Midi_FeedbackProcessor>(csi_, this, widget, strToHex(tokenLines[i][1]), 0));
-            else if (widgetType == "FB_NovationDisplayLower")
-                widget->GetFeedbackProcessors().push_back(make_unique<NovationDisplay_Midi_FeedbackProcessor>(csi_, this, widget, strToHex(tokenLines[i][1]), 1));
+            if (widgetType == "FB_NovationLaunchkeyMk4DisplayUpper")
+                widget->GetFeedbackProcessors().push_back(make_unique<NovationLaunchkeyMk4Display_Midi_FeedbackProcessor>(csi_, this, widget, strToHex(tokenLines[i][1]), 0));
+            else if (widgetType == "FB_NovationLaunchkeyMk4DisplayLower")
+                widget->GetFeedbackProcessors().push_back(make_unique<NovationLaunchkeyMk4Display_Midi_FeedbackProcessor>(csi_, this, widget, strToHex(tokenLines[i][1]), 1));
         }
         else if ((widgetType == "FB_FP8ScribbleLine1" || widgetType == "FB_FP16ScribbleLine1"
                  || widgetType == "FB_FP8ScribbleLine2" || widgetType == "FB_FP16ScribbleLine2"
